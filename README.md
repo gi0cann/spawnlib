@@ -1,2 +1,2 @@
 # spawnlib
-C Library for spawning and interacting with process
+Library for easily spawning and interacting with process
