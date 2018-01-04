@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/prctl.h>
 #include <signal.h>
+#ifdef __linux__
+    #include <sys/prctl.h>
+#endif
 
 typedef struct {
     pid_t pid;

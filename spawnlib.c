@@ -1,4 +1,4 @@
-#include "process.h"
+#include "spawnlib.h"
 
 int create_process(char *command, process *new_process) {
     //puts("creating process");
@@ -15,8 +15,10 @@ int create_process(char *command, process *new_process) {
         close(new_process->pipeinfd[0]);
         dup2(new_process->pipeoutfd[0], STDIN_FILENO);
         dup2(new_process->pipeinfd[1], STDOUT_FILENO);
-
+        
+        #ifdef __linux__
         prctl(PR_SET_PDEATHSIG, SIGTERM);
+        #endif
         //puts("trying to replace process");
         execl(command, "tee", (char *) NULL);
         //puts("execl failed");
@@ -33,7 +35,7 @@ int read_process(process *process) {
     return 0;
 }
 
-int write_process(FILE *process, char *input) {
+int write_process(process *process, char *input) {
     return 0;
 }
     
