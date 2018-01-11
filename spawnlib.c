@@ -32,6 +32,35 @@ int create_process(char *command, process *new_process) {
 }
 
 int read_process(process *process) {
+    int bytes_read = 0;
+    int bytes_to_read = 21;
+    int total_read = 0;
+    int rv;
+    fd_set set;
+    struct timeval timeout;
+    timeout.tv_sec = 6;
+    timeout.tv_usec = 0;
+    process->buf = (char *) malloc(21 * sizeof (char));
+    memset(process->buf, 0, 21);
+    while ((bytes_read = read(process->pipeinfd[0], (process->buf + total_read), 20)) > 0) {
+        rv = select(process->pipeinfd[0], &set, NULL, NULL, &timeout);
+        if (rv == -1) {
+            puts("select failed");
+        } else if (rv == 0) {
+            puts("timeout");
+            printf("timeout totalread: %d\n", total_read);
+        }
+        printf("bytes read: %d\n", bytes_read);
+        total_read += bytes_read;
+        if (bytes_read == 0) {
+            break;
+        } else if (bytes_read < 20) {
+            process->buf[total_read] = '\0';
+            break;
+        } else {
+            process->buf = realloc(process->buf, (total_read + 21) * sizeof (char));
+        }
+    }
     return 0;
 }
 

@@ -14,11 +14,10 @@ int main()
     if (test_proc.status == -1)
         exit(1);
 
-
-    test_proc.buf = (char *) malloc(21 * sizeof (char));
-    bytes_read = read(test_proc.pipeinfd[0], test_proc.buf, 20);
-    test_proc.buf[bytes_read] = '\0';
+    
+    read_process(&test_proc);
     printf("%s\n", test_proc.buf);
+    printf("total bytes: %ld\n", strlen(test_proc.buf));
     free(test_proc.buf);
 
     kill(test_proc.pid, SIGKILL);
