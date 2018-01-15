@@ -2,6 +2,7 @@
 
 int create_process(char *command, process *new_process) {
     //puts("creating process");
+    int flags;
     pipe(new_process->pipeinfd);
     pipe(new_process->pipeoutfd);
     new_process->pid = fork();
@@ -15,6 +16,9 @@ int create_process(char *command, process *new_process) {
         close(new_process->pipeinfd[0]);
         dup2(new_process->pipeoutfd[0], STDIN_FILENO);
         dup2(new_process->pipeinfd[1], STDOUT_FILENO);
+        flags = fcntl(new_process->pipeinfd[0], F_GETFL);
+        flags |= O_NONBLOCK;
+        fcntl(new_process->pipeinfd[0], F_SETFL, flags);
         
         #ifdef __linux__
         prctl(PR_SET_PDEATHSIG, SIGTERM);
@@ -35,7 +39,6 @@ int read_process(process *process) {
     int bytes_read = 0;
     int bytes_to_read = 21;
     int total_read = 0;
-    int rv;
     fd_set set;
     struct timeval timeout;
     timeout.tv_sec = 6;
@@ -43,13 +46,6 @@ int read_process(process *process) {
     process->buf = (char *) malloc(21 * sizeof (char));
     memset(process->buf, 0, 21);
     while ((bytes_read = read(process->pipeinfd[0], (process->buf + total_read), 20)) > 0) {
-        rv = select(process->pipeinfd[0], &set, NULL, NULL, &timeout);
-        if (rv == -1) {
-            puts("select failed");
-        } else if (rv == 0) {
-            puts("timeout");
-            printf("timeout totalread: %d\n", total_read);
-        }
         printf("bytes read: %d\n", bytes_read);
         total_read += bytes_read;
         if (bytes_read == 0) {

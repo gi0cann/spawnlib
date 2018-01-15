@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/select.h>
+#include <fcntl.h>
 #ifdef __linux__
     #include <sys/prctl.h>
 #endif
