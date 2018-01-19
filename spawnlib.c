@@ -16,9 +16,9 @@ int create_process(char *command, process *new_process) {
         close(new_process->pipeinfd[0]);
         dup2(new_process->pipeoutfd[0], STDIN_FILENO);
         dup2(new_process->pipeinfd[1], STDOUT_FILENO);
-        flags = fcntl(new_process->pipeinfd[0], F_GETFL);
+        /*flags = fcntl(new_process->pipeinfd[0], F_GETFL);
         flags |= O_NONBLOCK;
-        fcntl(new_process->pipeinfd[0], F_SETFL, flags);
+        fcntl(new_process->pipeinfd[0], F_SETFL, flags);*/
         
         #ifdef __linux__
         prctl(PR_SET_PDEATHSIG, SIGTERM);
@@ -45,17 +45,31 @@ int read_process(process *process) {
     timeout.tv_usec = 0;
     process->buf = (char *) malloc(21 * sizeof (char));
     memset(process->buf, 0, 21);
-    while ((bytes_read = read(process->pipeinfd[0], (process->buf + total_read), 20)) > 0) {
-        printf("bytes read: %d\n", bytes_read);
-        total_read += bytes_read;
-        if (bytes_read == 0) {
-            break;
-        } else if (bytes_read < 20) {
-            process->buf[total_read] = '\0';
+    while (1) {
+        FD_SET(process->pipeinfd[0], &set);
+        int rv = select(process->pipeinfd[0] + 1, &set, NULL, NULL, &timeout);
+
+        if (rv == -1)
+            perror("select");
+        else if (rv == 0) {
+            puts("Timeout");
             break;
         } else {
-            process->buf = realloc(process->buf, (total_read + 21) * sizeof (char));
+            if (FD_ISSET(process->pipeinfd[0], &set)) {
+                bytes_read = read(process->pipeinfd[0], (process->buf + total_read), 20);
+                printf("bytes read: %d\n", bytes_read);
+                total_read += bytes_read;
+                if (bytes_read == 0) {
+                    break;
+                } else if (bytes_read < 20) {
+                    process->buf[total_read] = '\0';
+                    break;
+                } else {
+                    process->buf = realloc(process->buf, (total_read + 21) * sizeof (char));
+                }
+            }
         }
+        FD_CLR(process->pipeinfd[0], &set);
     }
     return 0;
 }
