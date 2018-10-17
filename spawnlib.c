@@ -12,18 +12,20 @@ int create_process(char *command, process *new_process) {
         return -1;
     } else if (new_process->pid == 0) {
         //puts("child");
+        flags = fcntl(new_process->pipeinfd[0], F_GETFL);
+        if (flags == -1) {
+            puts("fcntl get failed");
+            exit(1);
+        }
+        flags |= O_NONBLOCK;
+        if (fcntl(new_process->pipeinfd[0], F_SETFL, flags)) {
+            puts("fcntl get failed");
+            exit(1);
+        }
         close(new_process->pipeoutfd[1]);
         close(new_process->pipeinfd[0]);
         dup2(new_process->pipeoutfd[0], STDIN_FILENO);
         dup2(new_process->pipeinfd[1], STDOUT_FILENO);
-        /*flags = fcntl(new_process->pipeinfd[0], F_GETFL);
-        flags |= O_NONBLOCK;
-        fcntl(new_process->pipeinfd[0], F_SETFL, flags);*/
-        
-        #ifdef __linux__
-        prctl(PR_SET_PDEATHSIG, SIGTERM);
-        #endif
-        //puts("trying to replace process");
         execl(command, "tee", (char *) NULL);
         //puts("execl failed");
         exit(1);
@@ -36,45 +38,20 @@ int create_process(char *command, process *new_process) {
 }
 
 int read_process(process *process) {
-    int bytes_read = 0;
-    int bytes_to_read = 21;
-    int total_read = 0;
-    fd_set set;
-    struct timeval timeout;
-    timeout.tv_sec = 6;
-    timeout.tv_usec = 0;
-    process->buf = (char *) malloc(21 * sizeof (char));
-    memset(process->buf, 0, 21);
-    while (1) {
-        FD_SET(process->pipeinfd[0], &set);
-        int rv = select(process->pipeinfd[0] + 1, &set, NULL, NULL, &timeout);
-
-        if (rv == -1)
-            perror("select");
-        else if (rv == 0) {
-            puts("Timeout");
-            break;
-        } else {
-            if (FD_ISSET(process->pipeinfd[0], &set)) {
-                bytes_read = read(process->pipeinfd[0], (process->buf + total_read), 20);
-                printf("bytes read: %d\n", bytes_read);
-                total_read += bytes_read;
-                if (bytes_read == 0) {
-                    break;
-                } else if (bytes_read < 20) {
-                    process->buf[total_read] = '\0';
-                    break;
-                } else {
-                    process->buf = realloc(process->buf, (total_read + 21) * sizeof (char));
-                }
-            }
-        }
-        FD_CLR(process->pipeinfd[0], &set);
+    int nread, len;
+    char *new = (char *) malloc( 21 * sizeof (char));
+    process->buf = (char *) malloc( 21 * sizeof (char));
+    len = 0;
+    while ((nread = read(process->pipeinfd[0], new, 20)) > 0) {
+        len += nread;
+        process->buf = realloc(process->buf, len+1);
+        process->buf = strncat(process->buf, new, len);
     }
     return 0;
 }
 
 int write_process(process *process, char *input) {
+    write(process->pipeoutfd[1], "Gionne\n", 7);
     return 0;
 }
     

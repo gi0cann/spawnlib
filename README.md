@@ -1,2 +1,3 @@
 # spawnlib
-Library for easily spawning and interacting with process
+WARNING: WORK IN PROGRESS. DO NOT USE. 
+Practice Library for easily spawning and interacting with process

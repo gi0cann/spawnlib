@@ -14,13 +14,12 @@ int main()
     if (test_proc.status == -1)
         exit(1);
 
-    
     read_process(&test_proc);
     printf("%s\n", test_proc.buf);
     printf("total bytes: %ld\n", strlen(test_proc.buf));
     free(test_proc.buf);
 
-    kill(test_proc.pid, SIGKILL);
-    waitpid(test_proc.pid, &test_proc.status, 0);
+    /*kill(test_proc.pid, SIGKILL);
+    waitpid(test_proc.pid, &test_proc.status, 0);*/
     return 0;
 }
