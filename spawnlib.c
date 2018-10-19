@@ -51,7 +51,7 @@ int read_process(process *process) {
 }
 
 int write_process(process *process, char *input) {
-    write(process->pipeoutfd[1], "Gionne\n", 7);
+    write(process->pipeoutfd[1], input, strlen(input));
     return 0;
 }
     
