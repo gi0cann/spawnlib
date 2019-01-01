@@ -19,5 +19,9 @@ typedef struct {
 } process;
 
 int create_process(char *command, process *new_process);
-int read_process(process *process);
-int write_process(process *process, char *input);
+int process_read(process *process, int len);
+int process_readline(process *process);
+int process_readuntil(process *process, char *end);
+int process_readall(process *process);
+int process_write(process *process, char *input);
+int process_writeline(process *process, char *input);
